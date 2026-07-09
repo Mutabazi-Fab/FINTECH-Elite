@@ -2,8 +2,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from .models import Transaction, Category, UserProfile
-from .serializers import TransactionSerializer
+from .models import Transaction, Category, UserProfile, LoanRequest
+from .serializers import TransactionSerializer, LoanRequestSerializer
 from django.db.models import Sum
 
 @api_view(['POST'])
@@ -233,3 +233,22 @@ def recommendations(request):
          advice.append("Your spending is well balanced! Keep it up.")
 
     return Response(advice)
+
+@api_view(['GET', 'POST'])
+def loan_requests(request):
+    if request.method == 'POST':
+        data = request.data.copy()
+        data['status'] = 'PENDING'
+        serializer = LoanRequestSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+        
+    if request.method == 'GET':
+        user_id = request.GET.get('user_id')
+        requests = LoanRequest.objects.all().order_by('-created_at')
+        if user_id:
+            requests = requests.filter(user_id=user_id)
+        serializer = LoanRequestSerializer(requests, many=True)
+        return Response(serializer.data)

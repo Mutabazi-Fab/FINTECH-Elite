@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Transaction, UserProfile
+from .models import Category, Transaction, UserProfile, LoanRequest
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -17,3 +17,11 @@ class TransactionAdmin(admin.ModelAdmin):
     list_filter = ('type', 'payment_method', 'category', 'date', 'user')
     search_fields = ('user__username', 'category__name')
     ordering = ('-date',)
+
+@admin.register(LoanRequest)
+class LoanRequestAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'amount', 'tenure_months', 'interest_rate', 'status', 'is_credited', 'created_at')
+    list_filter = ('status', 'is_credited', 'created_at', 'user')
+    list_editable = ('status',)
+    search_fields = ('user__username', 'amount')
+    readonly_fields = ('is_credited',)

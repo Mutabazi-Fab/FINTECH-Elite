@@ -8,4 +8,5 @@ urlpatterns = [
     path('analytics/', views.analytics),
     path('recommendations/', views.recommendations),
     path('chat/', views.chat),
+    path('loans/', views.loan_requests),
 ]
