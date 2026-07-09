@@ -1,0 +1,26 @@
+Slide 1: Fintech Project Overview
+- A personal financial behavior analysis system
+- Goal: Help users track transactions, categorize spending, and receive simple financial advice.
+- Built Using: Next.js (React), Frame-motion, Django REST Framework, SQLite
+
+Slide 2: System Architecture
+- Backend API powered by Django
+- User, Category, and Transaction Models
+- Glassmorphic Premium Frontend built loosely inspired by Fintech Auca
+- Connected securely and locally via CORS
+
+Slide 3: Core Logic
+- Calculating totals per category
+- Identifying highest spending category using ratios
+- Intelligent, simple rule-based recommendations engine
+- Generates smart advice like "Reduce Food Spending"
+
+Slide 4: Key Capabilities
+- JWT Authentication ready (DRF simplejwt enabled)
+- Transaction entry and history views
+- Visualized Dashboard representations and Analytics endpoints
+- Modern aesthetic and UI styling
+
+Slide 5: Conclusion
+- Project successfully bridges premium interface styling with robust behavior analysis.
+- Ready for local demo!
