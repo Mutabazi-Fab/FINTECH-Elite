@@ -88,7 +88,7 @@ export default function Transactions() {
             <p style={{ color: 'var(--text-muted)' }}>Manage your expenses and track your financial flow.</p>
           </header>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '3rem', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: '3rem', alignItems: 'start' }}>
             {/* ADD TRANSACTION FORM */}
             <motion.div 
               className="glass-card"

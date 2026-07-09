@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 export default function LoanCalculator() {
@@ -9,6 +9,20 @@ export default function LoanCalculator() {
   const [totalPay, setTotalPay] = useState(0);
   const [totalInterest, setTotalInterest] = useState(0);
   const [activeTab, setActiveTab] = useState("months");
+  const [loanHistory, setLoanHistory] = useState([]);
+
+  const fetchLoanHistory = () => {
+    const userId = localStorage.getItem("userId");
+    if (!userId) return;
+    fetch(`http://127.0.0.1:8000/api/loans/?user_id=${userId}`)
+      .then(res => res.json())
+      .then(data => setLoanHistory(data))
+      .catch(err => console.error("Error fetching loans:", err));
+  };
+
+  useEffect(() => {
+    fetchLoanHistory();
+  }, []);
 
   function calculate() {
     const P = Number(amount);
@@ -138,24 +152,33 @@ export default function LoanCalculator() {
                   if (!amount || monthly <= 0) return alert("Please calculate your loan first.");
                   
                   const userId = localStorage.getItem("userId");
+                  if (!userId) return alert("Please log in to apply for a loan.");
+
                   const loanData = {
-                    amount: amount,
-                    category: 10, // Income/Loan category
-                    date: new Date().toISOString().split('T')[0],
-                    type: 'INCOME',
-                    payment_method: 'LOAN',
-                    user: userId
+                    amount: Number(amount),
+                    tenure_months: activeTab === 'years' ? Number(months) * 12 : Number(months),
+                    interest_rate: Number(rate),
+                    user: parseInt(userId)
                   };
 
                   try {
-                    const res = await fetch("http://127.0.0.1:8000/api/transactions/", {
+                    const res = await fetch("http://127.0.0.1:8000/api/loans/", {
                       method: "POST",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify(loanData)
                     });
                     if (res.ok) {
-                      alert(`SUCCESS: RWF ${Number(amount).toLocaleString()} loan has been credited to your account!`);
-                      window.location.reload(); // Refresh to show new balance
+                      alert(`SUCCESS: Your loan application of RWF ${Number(amount).toLocaleString()} has been submitted and is pending admin review.`);
+                      setAmount("");
+                      setMonths("");
+                      setRate("");
+                      setMonthly(0);
+                      setTotalPay(0);
+                      setTotalInterest(0);
+                      fetchLoanHistory();
+                    } else {
+                      const errorData = await res.json();
+                      alert(`Error: ${JSON.stringify(errorData)}`);
                     }
                   } catch (err) {
                     alert("Error processing loan application.");
@@ -169,6 +192,70 @@ export default function LoanCalculator() {
               </div>
           </div>
         </div>
+      </div>
+
+      {/* LOAN HISTORY TABLE */}
+      <div className="glass-card" style={{ marginTop: '4rem', padding: '3rem' }}>
+        <h3 style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ color: 'var(--primary)' }}>📋</span> Loan Request History
+        </h3>
+        {loanHistory.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>No loan requests submitted yet.</p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  <th style={{ padding: '1rem 0.5rem' }}>Applied Date</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Amount (RWF)</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Tenure</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Interest</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Status</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Details / Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loanHistory.map((loan) => {
+                  let statusColor = '#eab308'; // Yellow for Pending
+                  if (loan.status === 'APPROVED') statusColor = 'var(--success)';
+                  if (loan.status === 'REJECTED') statusColor = '#ef4444'; // Red
+                  
+                  return (
+                    <tr key={loan.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '0.95rem' }}>
+                      <td style={{ padding: '1rem 0.5rem', color: 'var(--text-muted)' }}>
+                        {new Date(loan.created_at).toLocaleDateString()}
+                      </td>
+                      <td style={{ padding: '1rem 0.5rem', fontWeight: '700' }}>
+                        {loan.amount.toLocaleString()} RWF
+                      </td>
+                      <td style={{ padding: '1rem 0.5rem' }}>{loan.tenure_months} months</td>
+                      <td style={{ padding: '1rem 0.5rem' }}>{loan.interest_rate}%</td>
+                      <td style={{ padding: '1rem 0.5rem' }}>
+                        <span style={{ 
+                          color: statusColor, 
+                          background: `${statusColor}15`, 
+                          padding: '4px 10px', 
+                          borderRadius: '100px', 
+                          fontWeight: '800',
+                          fontSize: '0.8rem',
+                          textTransform: 'uppercase',
+                          border: `1px solid ${statusColor}30`
+                        }}>
+                          {loan.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '1rem 0.5rem', color: loan.status === 'REJECTED' ? '#fca5a5' : 'var(--text-muted)', fontStyle: loan.rejection_reason ? 'italic' : 'normal' }}>
+                        {loan.status === 'APPROVED' && 'Credited to account balance'}
+                        {loan.status === 'REJECTED' && `Declined: ${loan.rejection_reason || 'No reason provided'}`}
+                        {loan.status === 'PENDING' && 'Awaiting admin evaluation'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
     </section>

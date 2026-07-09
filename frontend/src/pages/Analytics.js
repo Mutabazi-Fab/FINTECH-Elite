@@ -10,11 +10,17 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const userId = localStorage.getItem("userId");
+    const url = userId 
+      ? `http://127.0.0.1:8000/api/analytics/?user_id=${userId}`
+      : "http://127.0.0.1:8000/api/analytics/";
+
     setLoading(true);
-    fetch("http://127.0.0.1:8000/api/analytics/")
+    fetch(url)
       .then(res => res.json())
       .then(resData => {
-        const formatted = resData.map(item => ({
+        const breakdownArray = resData.breakdown || [];
+        const formatted = breakdownArray.map(item => ({
           name: item.category__name || "Unknown",
           value: item.total
         }));
@@ -22,7 +28,8 @@ export default function Analytics() {
         setData(formatted);
         setLoading(false);
       })
-      .catch(_err => {
+      .catch(err => {
+        console.error("Error fetching analytics:", err);
         setLoading(false);
       });
   }, []);
